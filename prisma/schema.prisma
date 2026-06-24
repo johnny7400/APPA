@@ -4,24 +4,47 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 enum Role {
   ADMIN
   SEF_DC
+  SUPERVIZOR
   KURIR
   VOZAC_KAMIONA
-  SUPERVIZOR
+  ISPOMOĆ
+}
+
+model DC {
+  id           String   @id @default(cuid())
+  sifra        String   @unique
+  naziv        String
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sefDcId      String?
+  sefDc        User?    @relation("SefDC", fields: [sefDcId], references: [id])
+
+  supervizorId String?
+  supervizor   User?    @relation("SupervizorDC", fields: [supervizorId], references: [id])
+
+  vozaci       User[]   @relation("VozaciDC")
 }
 
 model User {
   id        String   @id @default(cuid())
   name      String
-  email     String   @unique
+  username  String   @unique
   password  String
   role      Role     @default(KURIR)
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  dcId      String?
+  dc        DC?      @relation("VozaciDC", fields: [dcId], references: [id])
+
+  dcKaoSef        DC[] @relation("SefDC")
+  dcKaoSupervizor DC[] @relation("SupervizorDC")
 }

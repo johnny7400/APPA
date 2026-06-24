@@ -1,60 +1,47 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { prisma } from "@/lib/prisma";
-import bcrypt from "bcryptjs";
-import { Role } from "@prisma/client";
+import { authConfig } from "./auth.config";
+
+// TODO: zamijeniti sa pravom bazom kada se postavi Neon
+const DEV_USERS = [
+  {
+    id: "dev-admin-1",
+    name: "Nikola G",
+    username: "nikolag",
+    password: "120024",
+    role: "ADMIN" as const,
+    active: true,
+  },
+];
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  session: { strategy: "jwt" },
-  pages: {
-    signIn: "/login",
-  },
+  ...authConfig,
   providers: [
     Credentials({
       name: "credentials",
       credentials: {
-        email: { label: "Email", type: "email" },
+        username: { label: "Korisničko ime", type: "text" },
         password: { label: "Lozinka", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+        if (!credentials?.username || !credentials?.password) return null;
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string },
-        });
-
-        if (!user || !user.active) return null;
-
-        const passwordMatch = await bcrypt.compare(
-          credentials.password as string,
-          user.password
+        const user = DEV_USERS.find(
+          (u) =>
+            u.username === credentials.username &&
+            u.password === credentials.password &&
+            u.active
         );
 
-        if (!passwordMatch) return null;
+        if (!user) return null;
 
         return {
           id: user.id,
           name: user.name,
-          email: user.email,
+          email: `${user.username}@dc-sistem.com`,
           role: user.role,
         };
       },
     }),
   ],
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.role = (user as { role: Role }).role;
-        token.id = user.id;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      if (token) {
-        session.user.role = token.role as Role;
-        session.user.id = token.id as string;
-      }
-      return session;
-    },
-  },
 });
