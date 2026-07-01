@@ -7,6 +7,7 @@ const ROLE_LABELS: Record<Role, string> = {
   KURIR: "Kurir",
   VOZAC_KAMIONA: "Vozač kamiona",
   SUPERVIZOR: "Supervizor",
+  ISPOMOĆ: "Ispomoć",
 };
 
 export default async function DashboardPage() {
